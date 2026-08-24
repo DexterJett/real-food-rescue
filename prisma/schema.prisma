@@ -1,0 +1,112 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  passwordHash  String
+  name          String
+  role          String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  producer      ProducerProfile?
+  reservations  Reservation[]
+  follows       Follow[]
+  subscriptions CategorySubscription[]
+  notifications Notification[]
+}
+
+model ProducerProfile {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  businessName String
+  type         String
+  description  String
+  street       String
+  city         String
+  zip          String
+  pickupHint   String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  listings     Listing[]
+  followers    Follow[]
+}
+
+model Listing {
+  id                 String   @id @default(cuid())
+  producerId         String
+  producer           ProducerProfile @relation(fields: [producerId], references: [id], onDelete: Cascade)
+  title              String
+  description        String
+  category           String
+  condition          String
+  originalPriceCents Int
+  rescuePriceCents   Int
+  quantity           Int
+  reservedCount      Int      @default(0)
+  pickupStart        DateTime
+  pickupEnd          DateTime
+  status             String   @default("ACTIVE")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  reservations       Reservation[]
+  notifications      Notification[]
+}
+
+model Reservation {
+  id         String   @id @default(cuid())
+  listingId  String
+  listing    Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quantity   Int      @default(1)
+  pickupCode String
+  status     String   @default("ACTIVE")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([listingId, userId])
+}
+
+model Follow {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  producerId String
+  producer   ProducerProfile @relation(fields: [producerId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, producerId])
+}
+
+model CategorySubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category  String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, category])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listingId String?
+  listing   Listing? @relation(fields: [listingId], references: [id], onDelete: SetNull)
+  title     String
+  body      String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
