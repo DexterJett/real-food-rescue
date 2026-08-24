@@ -8,19 +8,23 @@ datasource db {
 }
 
 model User {
-  id            String   @id @default(cuid())
-  email         String   @unique
-  passwordHash  String
-  name          String
-  role          String
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id              String   @id @default(cuid())
+  email           String   @unique
+  passwordHash    String
+  name            String
+  role            String
+  phone           String?
+  notifyEmail     Boolean  @default(true)
+  notifyWhatsapp  Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
-  producer      ProducerProfile?
-  reservations  Reservation[]
-  follows       Follow[]
-  subscriptions CategorySubscription[]
-  notifications Notification[]
+  producer        ProducerProfile?
+  reservations    Reservation[]
+  follows         Follow[]
+  subscriptions   CategorySubscription[]
+  notifications   Notification[]
+  outboundMessages OutboundMessage[]
 }
 
 model ProducerProfile {
@@ -42,7 +46,7 @@ model ProducerProfile {
 }
 
 model Listing {
-  id                 String   @id @default(cuid())
+  id                 String    @id @default(cuid())
   producerId         String
   producer           ProducerProfile @relation(fields: [producerId], references: [id], onDelete: Cascade)
   title              String
@@ -52,15 +56,19 @@ model Listing {
   originalPriceCents Int
   rescuePriceCents   Int
   quantity           Int
-  reservedCount      Int      @default(0)
+  reservedCount      Int       @default(0)
   pickupStart        DateTime
   pickupEnd          DateTime
-  status             String   @default("ACTIVE")
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  status             String    @default("ACTIVE")
+  imagePath          String?
+  mhdPlus            Boolean   @default(false)
+  bestBeforeDate     DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
   reservations       Reservation[]
   notifications      Notification[]
+  outboundMessages   OutboundMessage[]
 }
 
 model Reservation {
@@ -108,5 +116,20 @@ model Notification {
   title     String
   body      String
   read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model OutboundMessage {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listingId String?
+  listing   Listing? @relation(fields: [listingId], references: [id], onDelete: SetNull)
+  channel   String
+  to        String
+  subject   String
+  body      String
+  status    String
+  error     String?
   createdAt DateTime @default(now())
 }

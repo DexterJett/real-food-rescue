@@ -3,7 +3,7 @@
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { registerAction, type ActionState } from "@/lib/actions/auth";
-import { PRODUCER_TYPES, producerTypeLabel } from "@/lib/catalog";
+import { LI_COMMUNES, PRODUCER_TYPES, producerTypeLabel } from "@/lib/catalog";
 
 function Submit() {
   const { pending } = useFormStatus();
@@ -20,7 +20,9 @@ function Submit() {
 
 export function RegisterForm() {
   const [role, setRole] = useState<"CONSUMER" | "PRODUCER">("CONSUMER");
+  const [city, setCity] = useState<string>(LI_COMMUNES[0].name);
   const [state, action] = useActionState(registerAction, null as ActionState);
+  const selected = LI_COMMUNES.find((item) => item.name === city) ?? LI_COMMUNES[0];
 
   return (
     <form action={action} className="space-y-4">
@@ -66,6 +68,18 @@ export function RegisterForm() {
         />
       </label>
       <label className="block">
+        <span className="mb-1 block text-sm font-medium">WhatsApp / Mobil</span>
+        <input
+          name="phone"
+          type="tel"
+          placeholder="+423 234 56 78"
+          className="w-full rounded-2xl border border-line bg-card px-4 py-3 outline-none ring-brand focus:ring-2"
+        />
+        <p className="mt-1 text-xs text-muted">
+          Optional. Für Mitteilungen per WhatsApp, liechtensteinische Nummer +423.
+        </p>
+      </label>
+      <label className="block">
         <span className="mb-1 block text-sm font-medium">Passwort</span>
         <input
           name="password"
@@ -102,7 +116,7 @@ export function RegisterForm() {
             </select>
           </label>
           <label className="block">
-            <span className="mb-1 block text-sm font-medium">Straße</span>
+            <span className="mb-1 block text-sm font-medium">Strasse</span>
             <input
               name="street"
               required
@@ -115,16 +129,26 @@ export function RegisterForm() {
               <input
                 name="zip"
                 required
-                className="w-full rounded-2xl border border-line bg-card px-4 py-3 outline-none ring-brand focus:ring-2"
+                value={selected.zip}
+                readOnly
+                className="w-full rounded-2xl border border-line bg-card px-4 py-3 outline-none"
               />
             </label>
             <label className="col-span-2 block">
-              <span className="mb-1 block text-sm font-medium">Ort</span>
-              <input
+              <span className="mb-1 block text-sm font-medium">Gemeinde</span>
+              <select
                 name="city"
                 required
+                value={city}
+                onChange={(event) => setCity(event.target.value)}
                 className="w-full rounded-2xl border border-line bg-card px-4 py-3 outline-none ring-brand focus:ring-2"
-              />
+              >
+                {LI_COMMUNES.map((item) => (
+                  <option key={item.name} value={item.name}>
+                    {item.name}
+                  </option>
+                ))}
+              </select>
             </label>
           </div>
           <label className="block">

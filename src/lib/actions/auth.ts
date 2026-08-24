@@ -6,6 +6,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { clearSession, createSession } from "@/lib/auth";
 import { ROLES, isProducerType, isRole } from "@/lib/catalog";
+import { normalizePhone } from "@/lib/phone";
 
 const registerSchema = z
   .object({
@@ -19,6 +20,7 @@ const registerSchema = z
     zip: z.string().trim().optional(),
     city: z.string().trim().optional(),
     description: z.string().trim().optional(),
+    phone: z.string().trim().optional(),
   })
   .superRefine((data, ctx) => {
     if (data.role !== "PRODUCER") return;
@@ -76,6 +78,7 @@ export async function registerAction(
     zip: formData.get("zip") || undefined,
     city: formData.get("city") || undefined,
     description: formData.get("description") || undefined,
+    phone: formData.get("phone") || undefined,
   });
 
   if (!parsed.success) {
@@ -89,6 +92,13 @@ export async function registerAction(
     return { error: "Diese E-Mail ist bereits registriert." };
   }
 
+  const phone = parsed.data.phone ? normalizePhone(parsed.data.phone) : null;
+  if (parsed.data.phone && !phone) {
+    return {
+      error: "Bitte eine gültige Mobilnummer angeben, z. B. +423 234 56 78.",
+    };
+  }
+
   const passwordHash = await bcrypt.hash(parsed.data.password, 10);
   const user = await prisma.user.create({
     data: {
@@ -96,6 +106,9 @@ export async function registerAction(
       email: parsed.data.email,
       passwordHash,
       role: parsed.data.role,
+      phone,
+      notifyEmail: true,
+      notifyWhatsapp: Boolean(phone),
       producer:
         parsed.data.role === "PRODUCER"
           ? {

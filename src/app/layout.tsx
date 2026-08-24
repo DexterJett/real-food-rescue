@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     template: "%s · NochGut",
   },
   description:
-    "Bäckereien, Metzgereien, Restaurants und Hofläden retten überschüssige Lebensmittel. Privatpersonen holen sie zum kleinen Preis ab.",
+    "NochGut Liechtenstein: Bäckereien, Metzgereien, Restaurants und Hofläden retten überschüssige und MHD+-Lebensmittel. Abholung und Zahlung nur vor Ort.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

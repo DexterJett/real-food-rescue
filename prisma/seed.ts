@@ -7,7 +7,15 @@ function hoursFromNow(hours: number) {
   return new Date(Date.now() + hours * 60 * 60 * 1000);
 }
 
+function daysFromNow(days: number) {
+  const date = new Date();
+  date.setHours(12, 0, 0, 0);
+  date.setDate(date.getDate() + days);
+  return date;
+}
+
 async function main() {
+  await prisma.outboundMessage.deleteMany();
   await prisma.notification.deleteMany();
   await prisma.reservation.deleteMany();
   await prisma.follow.deleteMany();
@@ -24,6 +32,9 @@ async function main() {
       name: "Emma Richter",
       role: "CONSUMER",
       passwordHash,
+      phone: "+4232345678",
+      notifyEmail: true,
+      notifyWhatsapp: true,
     },
   });
 
@@ -33,15 +44,17 @@ async function main() {
       name: "Klaus Sonnenschein",
       role: "PRODUCER",
       passwordHash,
+      phone: "+4232371111",
+      notifyEmail: true,
       producer: {
         create: {
           businessName: "Bäckerei Sonnenschein",
           type: "BAKERY",
           description:
-            "Familienbäckerei in Kreuzberg. Abends retten wir Brot, Brötchen und Kuchen, statt sie wegzuwerfen.",
-          street: "Oranienstraße 42",
-          zip: "10969",
-          city: "Berlin",
+            "Familienbäckerei am Städtle in Vaduz. Abends retten wir Brot, Brötchen und Kuchen, statt sie wegzuwerfen.",
+          street: "Städtle 17",
+          zip: "9490",
+          city: "Vaduz",
           pickupHint: "Eingang neben dem Café, bitte Abholcode nennen.",
         },
       },
@@ -60,10 +73,10 @@ async function main() {
           businessName: "Metzgerei Huber",
           type: "BUTCHER",
           description:
-            "Handwerksmetzgerei. Wurst und Fleisch, das heute nicht mehr in die Auslage soll, geben wir vergünstigt ab.",
-          street: "Bergmannstraße 18",
-          zip: "10961",
-          city: "Berlin",
+            "Handwerksmetzgerei in Schaan. Wurst und Fleisch, das heute nicht mehr in die Auslage soll, geben wir vergünstigt ab.",
+          street: "Landstrasse 88",
+          zip: "9494",
+          city: "Schaan",
           pickupHint: "An der Theke, hintere Tür.",
         },
       },
@@ -82,11 +95,11 @@ async function main() {
           businessName: "Restaurant Grüne Olive",
           type: "RESTAURANT",
           description:
-            "Saisonale Küche. Tagesgerichte und Vorspeisen, die nicht mehr auf die Karte kommen, retten wir am Abend.",
-          street: "Kollwitzstraße 9",
-          zip: "10405",
-          city: "Berlin",
-          pickupHint: "Abholung am Nebeneingang, Hofseite.",
+            "Saisonale Küche in Vaduz. Tagesgerichte, die nicht mehr auf die Karte kommen, retten wir am Abend.",
+          street: "Städtle 5",
+          zip: "9490",
+          city: "Vaduz",
+          pickupHint: "Abholung am Nebeneingang zur Äule.",
         },
       },
     },
@@ -104,10 +117,10 @@ async function main() {
           businessName: "Bio-Hofladen Müller",
           type: "FARM_SHOP",
           description:
-            "Krummes Gemüse, reife Tomaten und Joghurt kurz vor dem MHD – alles noch gut, nur nicht mehr regalschön.",
-          street: "Pappelallee 12",
-          zip: "10437",
-          city: "Berlin",
+            "Krummes Gemüse, reife Tomaten und Joghurt mit MHD+ – alles noch gut, nur nicht mehr regalschön. In Triesen.",
+          street: "Dorfstrasse 12",
+          zip: "9495",
+          city: "Triesen",
           pickupHint: "Hofladenkasse, Papiertüte mitnehmen.",
         },
       },
@@ -126,7 +139,7 @@ async function main() {
         producerId: bakerId,
         title: "Körnerbrot vom Nachmittag",
         description:
-          "Zwei große Körnerbrote, heute gebacken, aber nicht mehr ganz knusprig in der Kruste. Noch hervorragend für Toast, Bruschetta oder Semmelknödel.",
+          "Zwei grosse Körnerbrote, heute gebacken, aber nicht mehr ganz knusprig in der Kruste. Noch hervorragend für Toast oder Knödel.",
         category: "BREAD",
         condition: "SURPLUS",
         originalPriceCents: 480,
@@ -136,6 +149,7 @@ async function main() {
         pickupStart: hoursFromNow(1),
         pickupEnd: hoursFromNow(6),
         status: "ACTIVE",
+        imagePath: "/seed/brot.svg",
       },
     }),
     prisma.listing.create({
@@ -152,6 +166,7 @@ async function main() {
         pickupStart: hoursFromNow(2),
         pickupEnd: hoursFromNow(7),
         status: "ACTIVE",
+        imagePath: "/seed/laugen.svg",
       },
     }),
     prisma.listing.create({
@@ -159,7 +174,7 @@ async function main() {
         producerId: bakerId,
         title: "Apfelkuchen-Stücke",
         description:
-          "Blechkuchen, der nicht mehr in die Auslage soll. Saftig, etwas weicher Belag, am selben Tag backen lassen.",
+          "Blechkuchen, der nicht mehr in die Auslage soll. Saftig, etwas weicher Belag.",
         category: "SWEETS",
         condition: "LEFTOVER",
         originalPriceCents: 320,
@@ -168,6 +183,7 @@ async function main() {
         pickupStart: hoursFromNow(3),
         pickupEnd: hoursFromNow(8),
         status: "ACTIVE",
+        imagePath: "/seed/kuchen.svg",
       },
     }),
     prisma.listing.create({
@@ -175,7 +191,7 @@ async function main() {
         producerId: butcherId,
         title: "Aufschnitt-Teller",
         description:
-          "Gemischter Aufschnitt vom heutigen Schnitt. Kühl lagern und zeitnah verbrauchen. Kein MHD-Problem, nur zu viel aufgeschnitten.",
+          "Gemischter Aufschnitt vom heutigen Schnitt. Kühl lagern und zeitnah verbrauchen.",
         category: "MEAT",
         condition: "SURPLUS",
         originalPriceCents: 890,
@@ -184,6 +200,7 @@ async function main() {
         pickupStart: hoursFromNow(1),
         pickupEnd: hoursFromNow(5),
         status: "ACTIVE",
+        imagePath: "/seed/aufschnitt.svg",
       },
     }),
     prisma.listing.create({
@@ -191,7 +208,7 @@ async function main() {
         producerId: butcherId,
         title: "Bratwurst-Packung",
         description:
-          "Frische Bratwurst, MHD morgen. Durchgegart oder gut gekühlt noch einsetzbar. Bitte selbst prüfen.",
+          "Frische Bratwurst, MHD gestern. Durchgegart oder gut gekühlt noch einsetzbar. Bitte selbst prüfen.",
         category: "MEAT",
         condition: "BEST_BEFORE",
         originalPriceCents: 640,
@@ -200,6 +217,9 @@ async function main() {
         pickupStart: hoursFromNow(2),
         pickupEnd: hoursFromNow(6),
         status: "ACTIVE",
+        imagePath: "/seed/wurst.svg",
+        mhdPlus: true,
+        bestBeforeDate: daysFromNow(-1),
       },
     }),
     prisma.listing.create({
@@ -207,7 +227,7 @@ async function main() {
         producerId: restaurantId,
         title: "Pasta-Box des Tages",
         description:
-          "Tagliatelle mit Gemüsesugo, frisch gekocht, aber nicht mehr für den Abend servicefähig. Zum Mitnehmen, aufwärmen, genießen.",
+          "Tagliatelle mit Gemüsesugo, frisch gekocht, aber nicht mehr für den Abend servicefähig.",
         category: "READY_MEALS",
         condition: "LEFTOVER",
         originalPriceCents: 1450,
@@ -216,6 +236,7 @@ async function main() {
         pickupStart: hoursFromNow(4),
         pickupEnd: hoursFromNow(9),
         status: "ACTIVE",
+        imagePath: "/seed/pasta.svg",
       },
     }),
     prisma.listing.create({
@@ -223,7 +244,7 @@ async function main() {
         producerId: restaurantId,
         title: "Grüner Salat mit Grillgemüse",
         description:
-          "Vorspeisen, die nach dem Mittagsservice übrig sind. Knackig bis weich, Dressing separat.",
+          "Vorspeisen, die nach dem Mittagsservice übrig sind. Dressing separat.",
         category: "PRODUCE",
         condition: "LEFTOVER",
         originalPriceCents: 780,
@@ -232,6 +253,7 @@ async function main() {
         pickupStart: hoursFromNow(3),
         pickupEnd: hoursFromNow(8),
         status: "ACTIVE",
+        imagePath: "/seed/salat.svg",
       },
     }),
     prisma.listing.create({
@@ -239,7 +261,7 @@ async function main() {
         producerId: farmId,
         title: "Krumme Möhren & Paprika",
         description:
-          "Krummes, fleckiges Gemüse vom Feld. Geschmacklich einwandfrei, optisch nicht regalwürdig. Perfekt für Suppe, Ofengemüse oder Saft.",
+          "Krummes, fleckiges Gemüse vom Feld. Geschmacklich einwandfrei, optisch nicht regalwürdig.",
         category: "PRODUCE",
         condition: "IMPERFECT",
         originalPriceCents: 450,
@@ -248,6 +270,7 @@ async function main() {
         pickupStart: hoursFromNow(0.5),
         pickupEnd: hoursFromNow(10),
         status: "ACTIVE",
+        imagePath: "/seed/gemuese.svg",
       },
     }),
     prisma.listing.create({
@@ -255,7 +278,7 @@ async function main() {
         producerId: farmId,
         title: "Naturjoghurt Becher",
         description:
-          "Bio-Joghurt, MHD heute oder morgen. Geschlossen, gekühlt. Vor dem Essen riechen und prüfen.",
+          "Bio-Joghurt, MHD heute. Geschlossen, gekühlt. Vor dem Essen riechen und prüfen.",
         category: "DAIRY",
         condition: "BEST_BEFORE",
         originalPriceCents: 220,
@@ -264,6 +287,9 @@ async function main() {
         pickupStart: hoursFromNow(1),
         pickupEnd: hoursFromNow(8),
         status: "ACTIVE",
+        imagePath: "/seed/joghurt.svg",
+        mhdPlus: true,
+        bestBeforeDate: daysFromNow(0),
       },
     }),
   ]);
@@ -294,25 +320,47 @@ async function main() {
         userId: emma.id,
         listingId: listings[1].id,
         title: "Neu bei Bäckerei Sonnenschein",
-        body: "Laugenstangen-Mischung (Brot & Backwaren) ist jetzt zum Retten da.",
+        body: "Laugenstangen-Mischung (Brot & Backwaren) ist jetzt zum Retten da. Zahlung nur vor Ort.",
         read: false,
       },
       {
         userId: emma.id,
         listingId: listings[8].id,
         title: "Neues Angebot: Milchprodukte",
-        body: "Bio-Hofladen Müller bietet Naturjoghurt Becher an.",
+        body: "Bio-Hofladen Müller bietet Naturjoghurt Becher MHD+ an. Zahlung nur vor Ort.",
         read: false,
       },
     ],
   });
 
-  console.log("Seed fertig. Demo-Logins:");
+  await prisma.outboundMessage.createMany({
+    data: [
+      {
+        userId: emma.id,
+        listingId: listings[8].id,
+        channel: "EMAIL",
+        to: emma.email,
+        subject: "Neues Angebot: Milchprodukte · NochGut Liechtenstein",
+        body: "Bio-Hofladen Müller bietet Naturjoghurt Becher MHD+ an. Zahlung nur vor Ort.\n\nBetrieb: Bio-Hofladen Müller, Triesen\nZahlung nur vor Ort (bar oder Karte im Laden).",
+        status: "DEMO",
+        error: "SMTP nicht konfiguriert",
+      },
+      {
+        userId: emma.id,
+        listingId: listings[8].id,
+        channel: "WHATSAPP",
+        to: emma.phone!,
+        subject: "WhatsApp",
+        body: "NochGut: Neues Angebot: Milchprodukte\nBio-Hofladen Müller bietet Naturjoghurt Becher MHD+ an. Zahlung nur vor Ort.",
+        status: "DEMO",
+        error: "WhatsApp/Twilio nicht konfiguriert",
+      },
+    ],
+  });
+
+  console.log("Seed fertig. Demo-Logins (Liechtenstein):");
   console.log("  Privatperson: emma@nochgut.de / demo1234");
   console.log("  Bäckerei:     baeckerei@nochgut.de / demo1234");
-  console.log("  Metzgerei:    metzgerei@nochgut.de / demo1234");
-  console.log("  Restaurant:   olive@nochgut.de / demo1234");
-  console.log("  Hofladen:     hofladen@nochgut.de / demo1234");
 }
 
 main()

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import type { ActionState } from "@/lib/actions/auth";
 import {
@@ -38,6 +38,9 @@ type ListingFormValues = {
   quantity: string;
   pickupStart: string;
   pickupEnd: string;
+  mhdPlus: boolean;
+  bestBeforeDate: string;
+  imagePath: string | null;
 };
 
 export function ListingForm({
@@ -52,6 +55,13 @@ export function ListingForm({
     ? updateListingAction.bind(null, listingId)
     : createListingAction;
   const [state, formAction] = useActionState(action, null as ActionState);
+  const [condition, setCondition] = useState(defaults?.condition ?? "SURPLUS");
+  const [mhdPlus, setMhdPlus] = useState(
+    Boolean(defaults?.mhdPlus) || defaults?.condition === "BEST_BEFORE",
+  );
+  const [preview, setPreview] = useState<string | null>(
+    defaults?.imagePath ?? null,
+  );
 
   return (
     <form action={formAction} className="space-y-4">
@@ -76,6 +86,29 @@ export function ListingForm({
           className="w-full rounded-2xl border border-line bg-card px-4 py-3 outline-none ring-brand focus:ring-2"
         />
       </label>
+      <label className="block">
+        <span className="mb-1 block text-sm font-medium">Foto vom Produkt</span>
+        {preview ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={preview}
+            alt="Vorschau"
+            className="mb-3 h-40 w-full rounded-2xl object-cover"
+          />
+        ) : null}
+        <input
+          name="image"
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            if (!file) return;
+            setPreview(URL.createObjectURL(file));
+          }}
+          className="w-full rounded-2xl border border-line bg-card px-4 py-3 text-sm"
+        />
+        <p className="mt-1 text-xs text-muted">JPG, PNG oder WebP, max. 4 MB.</p>
+      </label>
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block">
           <span className="mb-1 block text-sm font-medium">Kategorie</span>
@@ -95,20 +128,57 @@ export function ListingForm({
           <span className="mb-1 block text-sm font-medium">Zustand</span>
           <select
             name="condition"
-            defaultValue={defaults?.condition ?? "SURPLUS"}
+            value={condition}
+            onChange={(event) => {
+              const next = event.target.value;
+              setCondition(next);
+              if (next === "BEST_BEFORE") setMhdPlus(true);
+            }}
             className="w-full rounded-2xl border border-line bg-card px-4 py-3"
           >
-            {CONDITIONS.map((condition) => (
-              <option key={condition} value={condition}>
-                {conditionLabel[condition]}
+            {CONDITIONS.map((item) => (
+              <option key={item} value={item}>
+                {conditionLabel[item]}
               </option>
             ))}
           </select>
         </label>
       </div>
+      <div className="rounded-3xl border border-line bg-soft/70 p-4">
+        <label className="flex items-start gap-3">
+          <input
+            type="checkbox"
+            name="mhdPlus"
+            value="true"
+            checked={mhdPlus}
+            onChange={(event) => setMhdPlus(event.target.checked)}
+            className="mt-1 h-4 w-4"
+          />
+          <span>
+            <span className="font-semibold">Als MHD+ kennzeichnen</span>
+            <span className="mt-1 block text-sm text-muted">
+              Für Ware am oder nach dem Mindesthaltbarkeitsdatum. Kundinnen und
+              Kunden sehen das orange MHD+-Schild.
+            </span>
+          </span>
+        </label>
+        {mhdPlus ? (
+          <label className="mt-4 block">
+            <span className="mb-1 block text-sm font-medium">
+              Mindesthaltbarkeitsdatum
+            </span>
+            <input
+              name="bestBeforeDate"
+              type="date"
+              defaultValue={defaults?.bestBeforeDate}
+              className="w-full rounded-2xl border border-line bg-card px-4 py-3"
+            />
+          </label>
+        ) : null}
+      </div>
       <div className="grid gap-4 sm:grid-cols-3">
         <label className="block">
-          <span className="mb-1 block text-sm font-medium">Normalpreis €</span>
+          <span className="mb-1 block text-sm font-medium">Normalpreis CHF</span>
           <input
             name="originalPrice"
             type="number"
@@ -120,7 +190,7 @@ export function ListingForm({
           />
         </label>
         <label className="block">
-          <span className="mb-1 block text-sm font-medium">Rettungspreis €</span>
+          <span className="mb-1 block text-sm font-medium">Rettungspreis CHF</span>
           <input
             name="rescuePrice"
             type="number"
@@ -170,6 +240,9 @@ export function ListingForm({
           />
         </label>
       </div>
+      <p className="text-sm text-muted">
+        Zahlung nur vor Ort – bar oder mit Karte im Laden, keine Online-Zahlung.
+      </p>
       {state?.error ? (
         <p className="rounded-2xl bg-accent/10 px-4 py-3 text-sm text-accent">
           {state.error}

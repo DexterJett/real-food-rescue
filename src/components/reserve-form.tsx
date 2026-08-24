@@ -53,7 +53,7 @@ export function ReserveForm({
       ) : null}
       <Submit />
       <p className="text-xs text-muted">
-        Zahlung bar oder vor Ort beim Abholen. Du bekommst einen Abholcode.
+        Zahlung nur vor Ort: bar oder Karte im Laden. Du bekommst einen Abholcode.
       </p>
     </form>
   );

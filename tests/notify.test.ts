@@ -61,4 +61,16 @@ describe("notificationCopy", () => {
     expect(copy.title).toBe("Neu bei Bäckerei Sonnenschein");
     expect(copy.body).toContain("Körnerbrot");
   });
+
+  it("marks MHD+ products in the body", () => {
+    const copy = notificationCopy({
+      reasons: ["category"],
+      producerName: "Bio-Hofladen Müller",
+      listingTitle: "Naturjoghurt",
+      categoryLabel: "Milchprodukte",
+      mhdPlus: true,
+    });
+    expect(copy.body).toContain("MHD+");
+    expect(copy.body).toContain("vor Ort");
+  });
 });

@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
 import { cancelReservationAction } from "@/lib/actions/reservations";
-import { formatEuro, formatPickupWindow } from "@/lib/format";
+import { formatMoney, formatPickupWindow } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Reservierungen" };
 
@@ -23,7 +23,7 @@ export default async function ReservationsPage() {
     <div className="mx-auto max-w-3xl px-4 py-10">
       <h1 className="font-display text-4xl">Deine Reservierungen</h1>
       <p className="mt-2 text-muted">
-        Den Abholcode an der Theke zeigen. Bezahlen tust du vor Ort.
+        Den Abholcode an der Theke zeigen. Bezahlen tust du nur vor Ort.
       </p>
 
       {reservations.length === 0 ? (
@@ -52,7 +52,7 @@ export default async function ReservationsPage() {
                     {item.listing.title}
                   </Link>
                   <p className="mt-1 text-sm text-muted">
-                    {item.quantity}× · {formatEuro(item.listing.rescuePriceCents)} ·{" "}
+                    {item.quantity}× · {formatMoney(item.listing.rescuePriceCents)} ·{" "}
                     {formatPickupWindow(
                       item.listing.pickupStart,
                       item.listing.pickupEnd,

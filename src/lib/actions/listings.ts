@@ -5,14 +5,10 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
-import {
-  CATEGORIES,
-  CONDITIONS,
-  categoryLabel,
-  isCategory,
-} from "@/lib/catalog";
-import { eurosToCents, listingStatusFromCounts } from "@/lib/listing-utils";
-import { matchNotificationReasons, notificationCopy } from "@/lib/notify";
+import { CATEGORIES, CONDITIONS } from "@/lib/catalog";
+import { listingStatusFromCounts, moneyToCents } from "@/lib/listing-utils";
+import { dispatchListingNotifications } from "@/lib/dispatch";
+import { saveListingImage } from "@/lib/images";
 import type { ActionState } from "./auth";
 
 const listingSchema = z
@@ -26,6 +22,8 @@ const listingSchema = z
     quantity: z.coerce.number().int().min(1).max(99),
     pickupStart: z.string().min(1, "Abholbeginn fehlt."),
     pickupEnd: z.string().min(1, "Abholende fehlt."),
+    mhdPlus: z.boolean(),
+    bestBeforeDate: z.string().optional(),
   })
   .superRefine((data, ctx) => {
     if (data.rescuePrice > data.originalPrice) {
@@ -52,6 +50,31 @@ const listingSchema = z
     }
   });
 
+function parseListingForm(formData: FormData) {
+  const mhdChecked =
+    formData.get("mhdPlus") === "on" || formData.get("mhdPlus") === "true";
+  const condition = String(formData.get("condition") ?? "");
+  return listingSchema.safeParse({
+    title: formData.get("title"),
+    description: formData.get("description"),
+    category: formData.get("category"),
+    condition: formData.get("condition"),
+    originalPrice: formData.get("originalPrice"),
+    rescuePrice: formData.get("rescuePrice"),
+    quantity: formData.get("quantity"),
+    pickupStart: formData.get("pickupStart"),
+    pickupEnd: formData.get("pickupEnd"),
+    mhdPlus: mhdChecked || condition === "BEST_BEFORE",
+    bestBeforeDate: String(formData.get("bestBeforeDate") ?? "") || undefined,
+  });
+}
+
+function bestBeforeFromForm(value?: string) {
+  if (!value) return null;
+  const date = new Date(`${value}T00:00:00`);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
 async function requireProducer() {
   const user = await getSessionUser();
   if (!user || user.role !== "PRODUCER" || !user.producer) {
@@ -65,69 +88,6 @@ async function requireProducer() {
   return { ok: true as const, user, producer: user.producer };
 }
 
-async function notifyFollowers(listingId: string) {
-  const listing = await prisma.listing.findUnique({
-    where: { id: listingId },
-    include: { producer: true },
-  });
-  if (!listing || !isCategory(listing.category)) return;
-
-  const [follows, subscriptions] = await Promise.all([
-    prisma.follow.findMany({
-      where: { producerId: listing.producerId },
-      select: { userId: true },
-    }),
-    prisma.categorySubscription.findMany({
-      where: { category: listing.category },
-      select: { userId: true, category: true },
-    }),
-  ]);
-
-  const userIds = new Set<string>([
-    ...follows.map((item) => item.userId),
-    ...subscriptions.map((item) => item.userId),
-  ]);
-  userIds.delete(listing.producer.userId);
-
-  if (userIds.size === 0) return;
-
-  const users = await prisma.user.findMany({
-    where: { id: { in: [...userIds] }, role: "CONSUMER" },
-    include: {
-      follows: { select: { producerId: true } },
-      subscriptions: { select: { category: true } },
-    },
-  });
-
-  const rows = users
-    .map((user) => {
-      const reasons = matchNotificationReasons({
-        producerId: listing.producerId,
-        category: listing.category,
-        followedProducerIds: user.follows.map((item) => item.producerId),
-        subscribedCategories: user.subscriptions.map((item) => item.category),
-      });
-      if (reasons.length === 0) return null;
-      const copy = notificationCopy({
-        reasons,
-        producerName: listing.producer.businessName,
-        listingTitle: listing.title,
-        categoryLabel: categoryLabel[listing.category as keyof typeof categoryLabel],
-      });
-      return {
-        userId: user.id,
-        listingId: listing.id,
-        title: copy.title,
-        body: copy.body,
-      };
-    })
-    .filter((row): row is NonNullable<typeof row> => row !== null);
-
-  if (rows.length > 0) {
-    await prisma.notification.createMany({ data: rows });
-  }
-}
-
 export async function createListingAction(
   _prev: ActionState,
   formData: FormData,
@@ -135,19 +95,18 @@ export async function createListingAction(
   const producer = await requireProducer();
   if (!producer.ok) return { error: producer.error };
 
-  const parsed = listingSchema.safeParse({
-    title: formData.get("title"),
-    description: formData.get("description"),
-    category: formData.get("category"),
-    condition: formData.get("condition"),
-    originalPrice: formData.get("originalPrice"),
-    rescuePrice: formData.get("rescuePrice"),
-    quantity: formData.get("quantity"),
-    pickupStart: formData.get("pickupStart"),
-    pickupEnd: formData.get("pickupEnd"),
-  });
+  const parsed = parseListingForm(formData);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Ungültige Angaben." };
+  }
+
+  let imagePath: string | null = null;
+  try {
+    imagePath = await saveListingImage(formData.get("image") as File | null);
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : "Bild konnte nicht gespeichert werden.",
+    };
   }
 
   const listing = await prisma.listing.create({
@@ -157,19 +116,23 @@ export async function createListingAction(
       description: parsed.data.description,
       category: parsed.data.category,
       condition: parsed.data.condition,
-      originalPriceCents: eurosToCents(parsed.data.originalPrice),
-      rescuePriceCents: eurosToCents(parsed.data.rescuePrice),
+      originalPriceCents: moneyToCents(parsed.data.originalPrice),
+      rescuePriceCents: moneyToCents(parsed.data.rescuePrice),
       quantity: parsed.data.quantity,
       pickupStart: new Date(parsed.data.pickupStart),
       pickupEnd: new Date(parsed.data.pickupEnd),
       status: "ACTIVE",
+      imagePath,
+      mhdPlus: parsed.data.mhdPlus,
+      bestBeforeDate: bestBeforeFromForm(parsed.data.bestBeforeDate),
     },
   });
 
-  await notifyFollowers(listing.id);
+  await dispatchListingNotifications(listing.id);
   revalidatePath("/entdecken");
   revalidatePath("/dashboard");
   revalidatePath("/mitteilungen");
+  revalidatePath("/konto");
   redirect("/dashboard");
 }
 
@@ -186,17 +149,7 @@ export async function updateListingAction(
     return { error: "Angebot nicht gefunden." };
   }
 
-  const parsed = listingSchema.safeParse({
-    title: formData.get("title"),
-    description: formData.get("description"),
-    category: formData.get("category"),
-    condition: formData.get("condition"),
-    originalPrice: formData.get("originalPrice"),
-    rescuePrice: formData.get("rescuePrice"),
-    quantity: formData.get("quantity"),
-    pickupStart: formData.get("pickupStart"),
-    pickupEnd: formData.get("pickupEnd"),
-  });
+  const parsed = parseListingForm(formData);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Ungültige Angaben." };
   }
@@ -204,6 +157,18 @@ export async function updateListingAction(
   if (parsed.data.quantity < existing.reservedCount) {
     return {
       error: `Es sind bereits ${existing.reservedCount} Stück reserviert. Menge nicht unter diesen Wert setzen.`,
+    };
+  }
+
+  let imagePath = existing.imagePath;
+  try {
+    imagePath = await saveListingImage(
+      formData.get("image") as File | null,
+      existing.imagePath,
+    );
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : "Bild konnte nicht gespeichert werden.",
     };
   }
 
@@ -215,8 +180,8 @@ export async function updateListingAction(
       description: parsed.data.description,
       category: parsed.data.category,
       condition: parsed.data.condition,
-      originalPriceCents: eurosToCents(parsed.data.originalPrice),
-      rescuePriceCents: eurosToCents(parsed.data.rescuePrice),
+      originalPriceCents: moneyToCents(parsed.data.originalPrice),
+      rescuePriceCents: moneyToCents(parsed.data.rescuePrice),
       quantity: parsed.data.quantity,
       pickupStart: new Date(parsed.data.pickupStart),
       pickupEnd,
@@ -226,6 +191,9 @@ export async function updateListingAction(
         pickupEnd,
         cancelled: existing.status === "CANCELLED",
       }),
+      imagePath,
+      mhdPlus: parsed.data.mhdPlus,
+      bestBeforeDate: bestBeforeFromForm(parsed.data.bestBeforeDate),
     },
   });
 

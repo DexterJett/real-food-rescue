@@ -5,12 +5,30 @@ import { getSessionUser } from "@/lib/auth";
 import { ListingCard } from "@/components/listing-card";
 import {
   CATEGORIES,
+  LI_COMMUNES,
   categoryEmoji,
   categoryLabel,
   type Category,
 } from "@/lib/catalog";
 
 export const metadata: Metadata = { title: "Entdecken" };
+
+function hrefFor(input: {
+  view: string;
+  category: string;
+  city: string;
+  mhd: boolean;
+  q: string;
+}) {
+  const params = new URLSearchParams();
+  if (input.view !== "all") params.set("view", input.view);
+  if (input.category) params.set("category", input.category);
+  if (input.city) params.set("city", input.city);
+  if (input.mhd) params.set("mhd", "plus");
+  if (input.q) params.set("q", input.q);
+  const query = params.toString();
+  return query ? `/entdecken?${query}` : "/entdecken";
+}
 
 export default async function DiscoverPage({
   searchParams,
@@ -19,6 +37,8 @@ export default async function DiscoverPage({
     q?: string;
     category?: string;
     view?: string;
+    city?: string;
+    mhd?: string;
   }>;
 }) {
   const params = await searchParams;
@@ -26,6 +46,8 @@ export default async function DiscoverPage({
   const query = params.q?.trim() ?? "";
   const category = params.category ?? "";
   const view = params.view ?? "all";
+  const city = params.city ?? "";
+  const mhd = params.mhd === "plus";
 
   const followedIds =
     user && view === "followed"
@@ -52,6 +74,8 @@ export default async function DiscoverPage({
       status: "ACTIVE",
       pickupEnd: { gt: new Date() },
       ...(category ? { category } : {}),
+      ...(mhd ? { mhdPlus: true } : {}),
+      ...(city ? { producer: { city } } : {}),
       ...(query
         ? {
             OR: [
@@ -81,18 +105,28 @@ export default async function DiscoverPage({
     { id: "followed", label: "Meine Hersteller" },
     { id: "products", label: "Meine Produkte" },
   ];
+  const filters = {
+    view,
+    category,
+    city,
+    mhd,
+    q: query,
+  };
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
-      <h1 className="font-display text-4xl">Was heute noch gut ist</h1>
+      <h1 className="font-display text-4xl">Was in Liechtenstein noch gut ist</h1>
       <p className="mt-2 max-w-2xl text-muted">
-        Durchscrollen oder gezielt filtern. Folge deinem Bäcker, abonniere Brot
-        oder Joghurt – und lass dir das Wichtige als Mitteilung schicken.
+        Vaduz, Schaan, Triesen und die anderen Gemeinden. Folge deinem Bäcker,
+        filtere MHD+ und lass dir Treffer per E-Mail oder WhatsApp schicken.
+        Zahlung nur vor Ort.
       </p>
 
       <form className="mt-8 flex flex-col gap-3 sm:flex-row">
-        <input type="hidden" name="view" value={view} />
+        {view !== "all" ? <input type="hidden" name="view" value={view} /> : null}
         {category ? <input type="hidden" name="category" value={category} /> : null}
+        {city ? <input type="hidden" name="city" value={city} /> : null}
+        {mhd ? <input type="hidden" name="mhd" value="plus" /> : null}
         <input
           name="q"
           defaultValue={query}
@@ -112,7 +146,7 @@ export default async function DiscoverPage({
           {views.map((item) => (
             <Link
               key={item.id}
-              href={`/entdecken?view=${item.id}${category ? `&category=${category}` : ""}${query ? `&q=${encodeURIComponent(query)}` : ""}`}
+              href={hrefFor({ ...filters, view: item.id })}
               className={`rounded-full px-4 py-2 text-sm font-medium ${
                 view === item.id
                   ? "bg-foreground text-card"
@@ -127,7 +161,48 @@ export default async function DiscoverPage({
 
       <div className="mt-4 flex flex-wrap gap-2">
         <Link
-          href={`/entdecken?view=${view}${query ? `&q=${encodeURIComponent(query)}` : ""}`}
+          href={hrefFor({ ...filters, mhd: false })}
+          className={`rounded-full px-4 py-2 text-sm ${
+            !mhd ? "bg-brand text-white" : "border border-line bg-card"
+          }`}
+        >
+          Alle Angebote
+        </Link>
+        <Link
+          href={hrefFor({ ...filters, mhd: true })}
+          className={`rounded-full px-4 py-2 text-sm font-semibold ${
+            mhd ? "bg-accent text-white" : "border border-accent/40 bg-card text-accent"
+          }`}
+        >
+          MHD+
+        </Link>
+      </div>
+
+      <div className="mt-4 flex flex-wrap gap-2">
+        <Link
+          href={hrefFor({ ...filters, city: "" })}
+          className={`rounded-full px-4 py-2 text-sm ${
+            !city ? "bg-brand text-white" : "border border-line bg-card"
+          }`}
+        >
+          Ganz Liechtenstein
+        </Link>
+        {LI_COMMUNES.map((item) => (
+          <Link
+            key={item.name}
+            href={hrefFor({ ...filters, city: item.name })}
+            className={`rounded-full px-4 py-2 text-sm ${
+              city === item.name ? "bg-brand text-white" : "border border-line bg-card"
+            }`}
+          >
+            {item.name}
+          </Link>
+        ))}
+      </div>
+
+      <div className="mt-4 flex flex-wrap gap-2">
+        <Link
+          href={hrefFor({ ...filters, category: "" })}
           className={`rounded-full px-4 py-2 text-sm ${
             !category ? "bg-brand text-white" : "border border-line bg-card"
           }`}
@@ -137,7 +212,7 @@ export default async function DiscoverPage({
         {CATEGORIES.map((item: Category) => (
           <Link
             key={item}
-            href={`/entdecken?view=${view}&category=${item}${query ? `&q=${encodeURIComponent(query)}` : ""}`}
+            href={hrefFor({ ...filters, category: item })}
             className={`rounded-full px-4 py-2 text-sm ${
               category === item ? "bg-brand text-white" : "border border-line bg-card"
             }`}
@@ -149,8 +224,8 @@ export default async function DiscoverPage({
 
       {listings.length === 0 ? (
         <p className="mt-10 rounded-3xl border border-dashed border-line bg-card p-10 text-muted">
-          Keine passenden Angebote. Folge Herstellern oder abonniere Kategorien
-          unter „Mein Bäcker“.
+          Keine passenden Angebote in Liechtenstein. Folge Herstellern oder
+          abonniere Kategorien unter „Mein Bäcker“.
         </p>
       ) : (
         <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">

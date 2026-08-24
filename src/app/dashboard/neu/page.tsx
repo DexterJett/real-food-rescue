@@ -14,8 +14,9 @@ export default async function NewListingPage() {
     <div className="mx-auto max-w-2xl px-4 py-10">
       <h1 className="font-display text-4xl">Lebensmittel einstellen</h1>
       <p className="mt-2 mb-8 text-muted">
-        Preis, Menge und Abholfenster selbst festlegen. Wer dir folgt oder die
-        Kategorie abonniert hat, bekommt eine Mitteilung.
+        Preis in CHF, Foto, MHD+ falls nötig, Abholung in deiner Gemeinde.
+        Wer dir folgt, bekommt App-, E-Mail- und optional WhatsApp-Mitteilung.
+        Zahlung nur vor Ort.
       </p>
       <ListingForm />
     </div>

@@ -5,7 +5,7 @@ import { getSessionUser } from "@/lib/auth";
 import { ListingForm } from "@/components/listing-form";
 import { cancelListingAction } from "@/lib/actions/listings";
 import { markPickedUpAction } from "@/lib/actions/reservations";
-import { toDateTimeLocal } from "@/lib/format";
+import { toDateInput, toDateTimeLocal } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Angebot bearbeiten" };
 
@@ -46,6 +46,11 @@ export default async function EditListingPage({
             quantity: String(listing.quantity),
             pickupStart: toDateTimeLocal(listing.pickupStart),
             pickupEnd: toDateTimeLocal(listing.pickupEnd),
+            mhdPlus: listing.mhdPlus,
+            bestBeforeDate: listing.bestBeforeDate
+              ? toDateInput(listing.bestBeforeDate)
+              : "",
+            imagePath: listing.imagePath,
           }}
         />
         {listing.status !== "CANCELLED" ? (

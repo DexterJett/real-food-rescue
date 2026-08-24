@@ -18,16 +18,17 @@ export default async function HomePage() {
           <div>
             <p className="mb-4 inline-flex items-center gap-2 rounded-full bg-soft px-3 py-1 text-sm font-medium text-brand">
               <Leaf className="h-4 w-4" />
-              Lebensmittel retten statt wegwerfen
+              Lebensmittel retten in Liechtenstein
             </p>
             <h1 className="font-display text-4xl leading-tight text-foreground sm:text-6xl">
               Dein Bäcker hat noch Brot.
               <span className="text-brand"> Du holst es ab.</span>
             </h1>
             <p className="mt-6 max-w-xl text-lg text-muted">
-              NochGut verbindet Restaurants, Bäckereien, Metzgereien und Hofläden
-              mit Privatpersonen. Was abgelaufen, übrig oder nur leicht
-              unperfekt ist, bekommt einen kleinen Preis – und eine zweite Chance.
+              NochGut startet in Liechtenstein: Bäckereien, Metzgereien,
+              Restaurants und Hofläden stellen übrige oder MHD+-Lebensmittel zu
+              einem kleinen Preis ein. Du reservierst, holst vor Ort ab und
+              bezahlst im Laden.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
@@ -50,8 +51,8 @@ export default async function HomePage() {
               <Store className="mb-4 h-8 w-8" />
               <h2 className="font-display text-2xl">Für Hersteller</h2>
               <p className="mt-2 text-card/85">
-                Tagesreste, MHD-Ware oder krummes Gemüse in Minuten einstellen.
-                Preis selbst festlegen. Abholung im Laden.
+                Tagesreste, MHD+-Ware oder krummes Gemüse in Minuten einstellen.
+                Preis in CHF selbst festlegen. Abholung und Zahlung im Laden.
               </p>
             </div>
             <div className="rounded-3xl bg-card p-6">
@@ -59,16 +60,16 @@ export default async function HomePage() {
               <h2 className="font-display text-2xl">Für Privatpersonen</h2>
               <p className="mt-2 text-muted">
                 Scrollen, filtern, reservieren. Folge „deinem Bäcker“ oder
-                abonniere Brot, Joghurt, Gemüse – und bekomme Mitteilungen, sobald
-                etwas da ist.
+                abonniere Brot, Joghurt, Gemüse – Mitteilungen kommen in die App,
+                per E-Mail und optional per WhatsApp.
               </p>
             </div>
             <div className="rounded-3xl bg-accent p-6 text-white">
               <Bell className="mb-4 h-8 w-8" />
               <h2 className="font-display text-2xl">Mitteilungen statt Zufall</h2>
               <p className="mt-2 text-white/90">
-                Kein ständiges Nachschauen nötig. Neue Angebote von gefolgten
-                Betrieben oder gewählten Produktkategorien landen in deinem Postfach.
+                Neue Angebote landen in der App, im Postfach und – wenn du
+                möchtest – auf WhatsApp. MHD+-Produkte sind klar gekennzeichnet.
               </p>
             </div>
           </div>

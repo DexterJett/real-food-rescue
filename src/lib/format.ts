@@ -1,12 +1,12 @@
-export function formatEuro(cents: number) {
-  return new Intl.NumberFormat("de-DE", {
+export function formatMoney(cents: number) {
+  return new Intl.NumberFormat("de-LI", {
     style: "currency",
-    currency: "EUR",
+    currency: "CHF",
   }).format(cents / 100);
 }
 
 export function formatDateTime(value: Date) {
-  return new Intl.DateTimeFormat("de-DE", {
+  return new Intl.DateTimeFormat("de-LI", {
     weekday: "short",
     day: "numeric",
     month: "short",
@@ -15,8 +15,16 @@ export function formatDateTime(value: Date) {
   }).format(value);
 }
 
+export function formatDate(value: Date) {
+  return new Intl.DateTimeFormat("de-LI", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(value);
+}
+
 export function formatTime(value: Date) {
-  return new Intl.DateTimeFormat("de-DE", {
+  return new Intl.DateTimeFormat("de-LI", {
     hour: "2-digit",
     minute: "2-digit",
   }).format(value);
@@ -37,6 +45,11 @@ export function formatPickupWindow(start: Date, end: Date) {
 export function toDateTimeLocal(value: Date) {
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${value.getFullYear()}-${pad(value.getMonth() + 1)}-${pad(value.getDate())}T${pad(value.getHours())}:${pad(value.getMinutes())}`;
+}
+
+export function toDateInput(value: Date) {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${value.getFullYear()}-${pad(value.getMonth() + 1)}-${pad(value.getDate())}`;
 }
 
 export function addHours(value: Date, hours: number) {

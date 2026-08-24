@@ -19,8 +19,14 @@ export function generatePickupCode(random: () => number = Math.random) {
   return code;
 }
 
-export function eurosToCents(euros: number) {
-  return Math.round(euros * 100);
+export function moneyToCents(amount: number) {
+  return Math.round(amount * 100);
+}
+
+export const eurosToCents = moneyToCents;
+
+export function isMhdPlus(listing: { mhdPlus: boolean }) {
+  return listing.mhdPlus;
 }
 
 export function listingStatusFromCounts(input: {

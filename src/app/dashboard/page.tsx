@@ -3,7 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
-import { formatEuro, formatPickupWindow } from "@/lib/format";
+import { formatMoney, formatPickupWindow } from "@/lib/format";
 import { listingStatusLabel, type ListingStatus } from "@/lib/catalog";
 import { remainingQuantity } from "@/lib/listing-utils";
 
@@ -77,6 +77,11 @@ export default async function DashboardPage() {
                       className="font-semibold hover:text-brand"
                     >
                       {listing.title}
+                      {listing.mhdPlus ? (
+                        <span className="ml-2 rounded-full bg-accent px-2 py-0.5 text-[10px] font-bold text-white">
+                          MHD+
+                        </span>
+                      ) : null}
                     </Link>
                     <p className="text-muted">
                       {listing.reservations.length} offene Reservierung
@@ -84,7 +89,7 @@ export default async function DashboardPage() {
                     </p>
                   </td>
                   <td className="px-4 py-4">
-                    {formatEuro(listing.rescuePriceCents)}
+                    {formatMoney(listing.rescuePriceCents)}
                   </td>
                   <td className="px-4 py-4">
                     {remainingQuantity(listing)} / {listing.quantity}

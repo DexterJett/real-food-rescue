@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { MapPin, Clock } from "lucide-react";
+import { MapPin, Clock, Banknote } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
 import { FollowButton } from "@/components/follow-button";
 import { ReserveForm } from "@/components/reserve-form";
+import { ListingPhoto } from "@/components/listing-photo";
+import { MhdPlusBadge } from "@/components/mhd-plus-badge";
 import {
   categoryEmoji,
   categoryLabel,
@@ -16,7 +18,7 @@ import {
   type Condition,
   type ProducerType,
 } from "@/lib/catalog";
-import { formatEuro, formatPickupWindow } from "@/lib/format";
+import { formatMoney, formatPickupWindow } from "@/lib/format";
 import { discountPercent, remainingQuantity } from "@/lib/listing-utils";
 
 export const metadata: Metadata = { title: "Angebot" };
@@ -72,11 +74,23 @@ export default async function ListingDetailPage({
   return (
     <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 lg:grid-cols-[1.4fr_0.8fr]">
       <article className="rounded-3xl border border-line bg-card p-6 sm:p-8">
-        <p className="text-sm text-muted">
-          {categoryEmoji[listing.category as Category]}{" "}
-          {categoryLabel[listing.category as Category]} ·{" "}
-          {conditionLabel[listing.condition as Condition]}
-        </p>
+        <ListingPhoto
+          src={listing.imagePath}
+          alt={listing.title}
+          category={listing.category}
+          className="mb-6 h-64 w-full rounded-2xl"
+        />
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="text-sm text-muted">
+            {categoryEmoji[listing.category as Category]}{" "}
+            {categoryLabel[listing.category as Category]} ·{" "}
+            {conditionLabel[listing.condition as Condition]}
+          </p>
+          <MhdPlusBadge
+            mhdPlus={listing.mhdPlus}
+            bestBeforeDate={listing.bestBeforeDate}
+          />
+        </div>
         <h1 className="mt-2 font-display text-4xl">{listing.title}</h1>
         <p className="mt-4 text-lg leading-relaxed">{listing.description}</p>
         <p className="mt-4 rounded-2xl bg-soft px-4 py-3 text-sm text-muted">
@@ -84,10 +98,10 @@ export default async function ListingDetailPage({
         </p>
         <div className="mt-6 flex flex-wrap items-center gap-4">
           <span className="text-4xl font-semibold text-brand">
-            {formatEuro(listing.rescuePriceCents)}
+            {formatMoney(listing.rescuePriceCents)}
           </span>
           <span className="text-muted line-through">
-            {formatEuro(listing.originalPriceCents)}
+            {formatMoney(listing.originalPriceCents)}
           </span>
           {discount > 0 ? (
             <span className="rounded-full bg-accent/10 px-3 py-1 text-sm font-semibold text-accent">
@@ -110,8 +124,14 @@ export default async function ListingDetailPage({
             </dt>
             <dd className="mt-1 font-medium">
               {listing.producer.street}, {listing.producer.zip}{" "}
-              {listing.producer.city}
+              {listing.producer.city} · Liechtenstein
             </dd>
+          </div>
+          <div className="rounded-2xl bg-background px-4 py-3">
+            <dt className="flex items-center gap-2 text-sm text-muted">
+              <Banknote className="h-4 w-4" /> Zahlung
+            </dt>
+            <dd className="mt-1 font-medium">Nur vor Ort, bar oder Karte</dd>
           </div>
         </dl>
         <p className="mt-6 text-sm text-muted">

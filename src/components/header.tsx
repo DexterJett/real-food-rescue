@@ -21,10 +21,12 @@ export async function Header() {
               { href: "/favoriten", label: "Mein Bäcker" },
               { href: "/reservierungen", label: "Reservierungen" },
               { href: "/mitteilungen", label: "Mitteilungen", badge: unread },
+              { href: "/konto", label: "Konto" },
             ]
           : [
               { href: "/dashboard", label: "Betrieb" },
               { href: "/mitteilungen", label: "Mitteilungen", badge: unread },
+              { href: "/konto", label: "Konto" },
             ]),
       ]
     : [

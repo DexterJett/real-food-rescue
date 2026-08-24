@@ -25,6 +25,12 @@ export default async function NotificationsPage() {
           <h1 className="font-display text-4xl">Mitteilungen</h1>
           <p className="mt-2 text-muted">
             Neue Angebote von gefolgten Betrieben und abonnierten Produkten.
+            Dieselbe Nachricht geht – je nach Konto – auch per E-Mail und
+            WhatsApp. Einstellungen unter{" "}
+            <Link href="/konto" className="font-semibold text-brand">
+              Konto
+            </Link>
+            .
           </p>
         </div>
         {notifications.some((item) => !item.read) ? (
