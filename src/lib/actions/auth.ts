@@ -5,12 +5,7 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { clearSession, createSession } from "@/lib/auth";
-import {
-  PRODUCER_TYPES,
-  ROLES,
-  isProducerType,
-  isRole,
-} from "@/lib/catalog";
+import { ROLES, isProducerType, isRole } from "@/lib/catalog";
 
 const registerSchema = z
   .object({
@@ -168,5 +163,3 @@ export async function logoutAction() {
   await clearSession();
   redirect("/");
 }
-
-export { PRODUCER_TYPES };
