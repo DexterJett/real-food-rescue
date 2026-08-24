@@ -8,6 +8,7 @@ import { CategoryToggles } from "@/components/category-toggles";
 import { producerTypeLabel, type ProducerType } from "@/lib/catalog";
 
 export const metadata: Metadata = { title: "Mein Bäcker" };
+export const dynamic = "force-dynamic";
 
 export default async function FavoritesPage() {
   const user = await getSessionUser();

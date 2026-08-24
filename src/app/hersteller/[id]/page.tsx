@@ -10,6 +10,7 @@ import {
 } from "@/lib/catalog";
 
 export const metadata: Metadata = { title: "Hersteller" };
+export const dynamic = "force-dynamic";
 
 export default async function ProducerPage({
   params,

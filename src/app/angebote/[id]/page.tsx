@@ -20,6 +20,7 @@ import { formatEuro, formatPickupWindow } from "@/lib/format";
 import { discountPercent, remainingQuantity } from "@/lib/listing-utils";
 
 export const metadata: Metadata = { title: "Angebot" };
+export const dynamic = "force-dynamic";
 
 export default async function ListingDetailPage({
   params,

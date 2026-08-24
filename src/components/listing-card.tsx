@@ -24,6 +24,7 @@ export function ListingCard({ listing }: { listing: CardListing }) {
   return (
     <Link
       href={`/angebote/${listing.id}`}
+      prefetch={false}
       className="group flex h-full flex-col rounded-3xl border border-line bg-card p-5 shadow-[0_8px_30px_rgba(28,43,36,0.04)] transition hover:-translate-y-0.5 hover:border-brand/30"
     >
       <div className="mb-4 flex items-start justify-between gap-3">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
+import { useRouter } from "next/navigation";
 import {
   CATEGORIES,
   categoryEmoji,
@@ -10,6 +11,7 @@ import {
 import { toggleCategoryAction } from "@/lib/actions/social";
 
 export function CategoryToggles({ selected }: { selected: string[] }) {
+  const router = useRouter();
   const [pending, start] = useTransition();
 
   return (
@@ -21,7 +23,12 @@ export function CategoryToggles({ selected }: { selected: string[] }) {
             key={category}
             type="button"
             disabled={pending}
-            onClick={() => start(() => toggleCategoryAction(category))}
+            onClick={() =>
+              start(async () => {
+                await toggleCategoryAction(category);
+                router.refresh();
+              })
+            }
             className={`rounded-full px-4 py-2 text-sm font-medium ${
               active
                 ? "bg-brand text-white"
